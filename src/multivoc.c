@@ -73,11 +73,14 @@ static inline unsigned int SWAP32(unsigned int s)
           ) >> (bits)                           \
         )
 
-#define IS_QUIET( ptr )  ( ( void * )( ptr ) == ( void * )&MV_VolumeTable[ 0 ] )
-
 static int       MV_ReverbLevel;
 static int       MV_ReverbDelay;
 static VOLUME16 *MV_ReverbTable = NULL;
+
+Volume_LUT volume_sfx;
+Volume_LUT volume_bgm;
+
+#define IS_QUIET( ptr )  ( ( void * )( ptr ) == ( void * )&volume_sfx.volume_table[ 0 ] )
 
 //static signed short MV_VolumeTable[ MV_MaxVolume + 1 ][ 256 ];
 static signed short MV_VolumeTable[ 63 + 1 ][ 256 ];
@@ -298,6 +301,8 @@ static void MV_Mix
          {
          voclength = length;
          }
+
+
 
       if (voice->mix) {
          voice->mix( position, rate, start, voclength );
@@ -1401,7 +1406,8 @@ int MV_SetFrequency
 
 static short *MV_GetVolumeTable
    (
-   int vol
+   int vol,
+   int is_bgm
    )
 
    {
@@ -1410,7 +1416,10 @@ static short *MV_GetVolumeTable
 
    volume = MIX_VOLUME( vol );
 
-   table = (short *) &MV_VolumeTable[ volume ];
+   if (is_bgm)
+	  table = (short *) &volume_bgm.volume_table[ volume ];
+   else
+      table = (short *) &volume_sfx.volume_table[ volume ];
 
    return( table );
    }
@@ -1621,16 +1630,18 @@ void MV_SetVoiceVolume
       right = vol;
       }
 
+   int bgm = ( voice->callbackval == -65536 );
+
    if ( MV_SwapLeftRight )
       {
       // SBPro uses reversed panning
-      voice->LeftVolume  = MV_GetVolumeTable( right );
-      voice->RightVolume = MV_GetVolumeTable( left );
+      voice->LeftVolume  = MV_GetVolumeTable( right, bgm );
+      voice->RightVolume = MV_GetVolumeTable( left, bgm );
       }
    else
       {
-      voice->LeftVolume  = MV_GetVolumeTable( left );
-      voice->RightVolume = MV_GetVolumeTable( right );
+      voice->LeftVolume  = MV_GetVolumeTable( left, bgm );
+      voice->RightVolume = MV_GetVolumeTable( right, bgm );
       }
 
    MV_SetVoiceMixMode( voice );
@@ -1771,7 +1782,7 @@ void MV_SetReverb
 
    {
    MV_ReverbLevel = MIX_VOLUME( reverb );
-   MV_ReverbTable = &MV_VolumeTable[ MV_ReverbLevel ];
+   MV_ReverbTable = &volume_sfx.volume_table[ MV_ReverbLevel ];
    }
 
 
@@ -2578,7 +2589,8 @@ void MV_CreateVolumeTable
    (
    int index,
    int volume,
-   int MaxVolume
+   int MaxVolume,
+   Volume_LUT *vol
    )
 
    {
@@ -2594,7 +2606,7 @@ void MV_CreateVolumeTable
          val   = i - 0x8000;
          val  *= level;
          val  /= MV_MaxVolume;
-         MV_VolumeTable[ index ][ i / 256 ] = val;
+         vol->volume_table[ index ][ i / 256 ] = val;
          }
       }
    else
@@ -2604,7 +2616,7 @@ void MV_CreateVolumeTable
          val   = i - 0x80;
          val  *= level;
          val  /= MV_MaxVolume;
-         MV_VolumeTable[ volume ][ i ] = val;
+         vol->volume_table[ volume ][ i ] = val;
          }
       }
    }
@@ -2617,9 +2629,10 @@ void MV_CreateVolumeTable
    level.
 ---------------------------------------------------------------------*/
 
-static void MV_CalcVolume
+void MV_CalcVolume
    (
-   int MaxVolume
+   int MaxVolume,
+   Volume_LUT *vol
    )
 
    {
@@ -2627,19 +2640,19 @@ static void MV_CalcVolume
 
    for( volume = 0; volume < 128; volume++ )
       {
-      MV_HarshClipTable[ volume ] = 0;
-      MV_HarshClipTable[ volume + 384 ] = 255;
+      vol->harshclip_table[ volume ] = 0;
+      vol->harshclip_table[ volume + 384 ] = 255;
       }
    for( volume = 0; volume < 256; volume++ )
       {
-      MV_HarshClipTable[ volume + 128 ] = volume;
+	   vol->harshclip_table[ volume + 128 ] = volume;
       }
 
    // For each volume level, create a translation table with the
    // appropriate volume calculated.
    for( volume = 0; volume <= MV_MaxVolume; volume++ )
       {
-      MV_CreateVolumeTable( volume, volume, MaxVolume );
+      MV_CreateVolumeTable( volume, volume, MaxVolume, vol );
       }
    }
 
@@ -2705,7 +2718,7 @@ void MV_SetVolume
    MV_TotalVolume = volume;
 
    // Calculate volume table
-   MV_CalcVolume( volume );
+   MV_CalcVolume( volume, &volume_sfx );
    }
 
 

@@ -53,6 +53,16 @@ enum MV_Errors
    MV_NullRecordFunction
    };
 
+typedef struct Volume_LUT
+{
+	/* MV_NumVoices * 256 */
+	char harshclip_table[ 8 * 256 ];
+	signed short volume_table[ 63 + 1 ][ 256 ];
+} Volume_LUT;
+
+extern Volume_LUT volume_sfx;
+extern Volume_LUT volume_bgm;
+
 const char *MV_ErrorString( int ErrorNumber );
 int   MV_VoicePlaying( int handle );
 int   MV_VoicePaused( int handle );
@@ -107,7 +117,7 @@ int   MV_PlayVorbis( char *ptr, unsigned int length, int pitchoffset, int vol, i
 int   MV_PlayLoopedVorbis( char *ptr, unsigned int length, int loopstart, int loopend,
                         int pitchoffset, int vol, int left, int right, int priority,
                         unsigned int callbackval );
-void  MV_CreateVolumeTable( int index, int volume, int MaxVolume );
+void  MV_CreateVolumeTable( int index, int volume, int MaxVolume, Volume_LUT *vol );
 void  MV_SetVolume( int volume );
 int   MV_GetVolume( void );
 void  MV_SetCallBack( void ( *function )( unsigned int ) );

@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "music.h"
 #include "midi.h"
 #include "ll_man.h"
+#include "multivoc.h"
 
 #define TRUE  ( 1 == 1 )
 #define FALSE ( !TRUE )
@@ -232,6 +233,9 @@ void MUSIC_SetVolume
    {
    volume = max( 0, volume );
    volume = min( volume, 255 );
+
+   // Calculate volume table
+   MV_CalcVolume( volume, &volume_bgm );
 
    /*if ( MUSIC_SoundDevice != -1 )
       {
