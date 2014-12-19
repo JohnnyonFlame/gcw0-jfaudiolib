@@ -31,6 +31,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_TIMIDITY
+#include <timidity.h>
+int timidity_status = 0;
+MidIStream *stream;
+MidSongOptions options;
+#endif
+
 #include "sndcards.h"
 #include "drivers.h"
 #include "multivoc.h"
@@ -135,7 +142,7 @@ int FX_Init
 		SoundCard = ASS_NoSound;
 #endif
 	}
-	
+
 	if (SoundCard < 0 || SoundCard >= ASS_NumSoundCards) {
 		FX_SetErrorCode( FX_InvalidCard );
 		status = FX_Error;
@@ -159,6 +166,20 @@ int FX_Init
       {
       FX_Installed = TRUE;
       }
+
+#ifdef HAVE_TIMIDITY
+	options.rate = *mixrate;
+	options.format = (*samplebits == 16) ? MID_AUDIO_S16LSB : MID_AUDIO_S8;
+	options.channels = *numchannels;
+	options.buffer_size = 4096;
+
+	if (mid_init("/etc/timidity.cfg") < 0)
+	{
+		printf("Failed to initialize Timidity!\n");
+	}
+	else
+		timidity_status = 1;
+#endif
 
    return( status );
    }
@@ -1031,6 +1052,11 @@ int FX_PlayLoopedAuto( char *ptr, unsigned int length, int loopstart, int loopen
       handle = MV_PlayLoopedVorbis(ptr, length, loopstart, loopend, pitchoffset,
                               vol, left, right, priority, callbackval);
    #endif
+#ifdef HAVE_TIMIDITY
+   } else if (!memcmp("MThd", ptr, 4)) {
+	  handle = MV_PlayLoopedTimidity(ptr, length, loopstart, loopend, pitchoffset,
+              vol, left, right, priority, callbackval);
+#endif
    }
    
    if ( handle < MV_Ok )

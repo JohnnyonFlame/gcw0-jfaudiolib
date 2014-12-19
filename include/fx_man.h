@@ -113,4 +113,10 @@ int FX_StartDemandFeedPlayback( void ( *function )( char **ptr, unsigned int *le
 int  FX_StartRecording( int MixRate, void ( *function )( char *ptr, int length ) );
 void FX_StopRecord( void );
 
+#ifdef HAVE_TIMIDITY
+extern int timidity_status;
+extern MidIStream *stream;
+extern MidSongOptions options;
+#endif
+
 #endif

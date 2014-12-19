@@ -3,6 +3,7 @@ JFAUDIOLIB_HAVE_ALSA=0
 JFAUDIOLIB_HAVE_FLUIDSYNTH=0
 JFAUDIOLIB_HAVE_VORBIS=0
 JFAUDIOLIB_USE_SDLMIXER=0
+JFAUDIOLIB_USE_TIMIDITY?=0
 
 JFAUDIOLIB=libjfaudiolib.a
 JFAUDIOLIB_LDFLAGS=
@@ -25,5 +26,9 @@ else
  ifeq (yes,$(shell pkg-config --exists fluidsynth && echo yes))
   JFAUDIOLIB_HAVE_FLUIDSYNTH=1
   JFAUDIOLIB_LDFLAGS+= $(shell pkg-config --libs fluidsynth)
+ endif
+ ifeq ($(JFAUDIOLIB_USE_TIMIDITY),1)
+  JFAUDIOLIB_HAVE_TIMIDITY=1
+  JFAUDIOLIB_LDFLAGS+= ../libtimidity/src/.libs/libtimidity.a
  endif
 endif

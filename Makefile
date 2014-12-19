@@ -53,6 +53,10 @@ else
  ifeq (1,$(JFAUDIOLIB_HAVE_VORBIS))
   CPPFLAGS+= -DHAVE_VORBIS $(shell pkg-config --cflags vorbisfile)
  endif
+ ifeq (1,$(JFAUDIOLIB_HAVE_TIMIDITY))
+  CPPFLAGS+= -DHAVE_TIMIDITY -I../libtimidity/src
+  SOURCES+=  src/timidity.c
+ endif
 endif
 
 OBJECTS=$(SOURCES:%.c=%.o)

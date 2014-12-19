@@ -96,7 +96,8 @@ typedef enum
    VOC,
    DemandFeed,
    WAV,
-	Vorbis
+   Vorbis,
+   Timidity
    } wavedata;
 
 typedef enum
